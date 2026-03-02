@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Iris Mobile",
+    "slug": "iris-mobile",
+    "scheme": "irismobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "plugins": ["sentry-expo"],
+    "ios": {
+      "bundleIdentifier": "ai.iris.mobile"
+    },
+    "android": {
+      "package": "ai.iris.mobile"
+    }
+  }
+}

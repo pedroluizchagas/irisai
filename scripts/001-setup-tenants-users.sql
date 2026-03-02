@@ -1,0 +1,26 @@
+CREATE TABLE IF NOT EXISTS tenants (
+  id VARCHAR(21) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  slug VARCHAR(100) NOT NULL UNIQUE,
+  plan VARCHAR(50) DEFAULT 'free',
+  created_at TIMESTAMP DEFAULT now()
+);
+COMMIT;
+
+CREATE TABLE IF NOT EXISTS users (
+  id VARCHAR(21) PRIMARY KEY,
+  tenant_id VARCHAR(21) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255),
+  avatar_url TEXT,
+  role VARCHAR(50) DEFAULT 'member',
+  created_at TIMESTAMP DEFAULT now()
+);
+COMMIT;
+
+CREATE INDEX ASYNC IF NOT EXISTS idx_users_tenant ON users(tenant_id);
+COMMIT;
+
+CREATE INDEX ASYNC IF NOT EXISTS idx_users_email ON users(email);
+COMMIT;

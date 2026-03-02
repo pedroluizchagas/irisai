@@ -1,0 +1,35 @@
+import type { Metadata } from 'next'
+import { Geist, Geist_Mono } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
+import { Toaster } from 'sonner'
+import './globals.css'
+import { SentryInit } from '@/components/sentry-init'
+
+const _geist = Geist({ subsets: ['latin'] })
+const _geistMono = Geist_Mono({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: 'Iris AI - Assistente Pessoal Inteligente',
+  description:
+    'Iris e sua assistente pessoal com IA. Gerencie tarefas, agenda, notas, financas, metas e habitos por conversa natural.',
+  icons: {
+    icon: [{ url: '/images/iris-logo.png', type: 'image/png' }],
+  },
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className="font-sans antialiased">
+        {children}
+        <SentryInit />
+        <Toaster richColors position="top-right" />
+        <Analytics />
+      </body>
+    </html>
+  )
+}

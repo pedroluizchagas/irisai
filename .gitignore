@@ -1,0 +1,40 @@
+# Node / PNPM
+node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env secrets
+.env
+.env.*
+mobile/.env
+mobile/.env.*
+packages/**/.env
+packages/**/.env.*
+
+# Next.js
+.next/
+.vercel/
+
+# Expo / React Native
+mobile/.expo/
+mobile/.cache/
+mobile/.DS_Store
+android/
+ios/
+
+# Build outputs
+dist/
+coverage/
+
+# IDE / Editor
+.vscode/
+.idea/
+.DS_Store
+
+# Misc
+*.local
+*.tmp
+tmp/
