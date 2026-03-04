@@ -1,4 +1,4 @@
-import { registerUser } from '@/lib/auth'
+import { registerUser, createRefreshToken } from '@/lib/auth'
 import { success, error, serverError } from '@/lib/api-response'
 import { z } from 'zod'
 import { checkRateLimit } from '@/lib/rate-limit'
@@ -23,7 +23,12 @@ export async function POST(request: Request) {
     const response = success({ user: result.user, tenant: result.tenant, token: result.token }, undefined, 201)
     const url = new URL(request.url)
     const secureFlag = url.protocol === 'https:' || process.env.NODE_ENV === 'production' ? '; Secure' : ''
-    response.headers.set('Set-Cookie', `iris-token=${result.token}; Path=/; HttpOnly; SameSite=Lax${secureFlag}; Max-Age=${60 * 60 * 24 * 7}`)
+    const refresh = createRefreshToken({ userId: result.user.id, tenantId: result.user.tenant_id })
+    const cookies = [
+      `iris-token=${result.token}; Path=/; HttpOnly; SameSite=Lax${secureFlag}; Max-Age=${60 * 60 * 24 * 7}`,
+      `iris-refresh=${refresh}; Path=/; HttpOnly; SameSite=Strict${secureFlag}; Max-Age=${60 * 60 * 24 * 30}`
+    ]
+    response.headers.set('Set-Cookie', cookies.join(', '))
     log.end(201, { userId: result.user.id, tenantId: result.user.tenant_id })
     return response
   } catch (err) {

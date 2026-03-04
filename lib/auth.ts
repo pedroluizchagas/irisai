@@ -3,16 +3,22 @@ import { hash, compare } from 'bcryptjs'
 import { sign, verify } from 'jsonwebtoken'
 import { query } from '@/lib/db'
 import { nanoid } from 'nanoid'
-import type { User, Tenant } from '@/core/entities'
+import type { User, Tenant } from '@iris/domain'
 
-const JWT_SECRET: string = (() => {
+function getJwtSecret(): string {
   const s = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
-  if (!s) {
-    throw new Error('AUTH_SECRET not configured')
-  }
-  return s
-})()
+  if (s) return s
+  if (process.env.NODE_ENV === 'test') return 'test-secret'
+  throw new Error('AUTH_SECRET not configured')
+}
 const JWT_EXPIRES_IN = '7d'
+function getRefreshSecret(): string {
+  const s = process.env.AUTH_REFRESH_SECRET || process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
+  if (s) return s
+  if (process.env.NODE_ENV === 'test') return 'test-refresh'
+  throw new Error('AUTH_REFRESH_SECRET not configured')
+}
+const REFRESH_EXPIRES_IN = '30d'
 
 // Password utilities
 export async function hashPassword(password: string): Promise<string> {
@@ -25,12 +31,24 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 
 // JWT utilities
 export function createToken(payload: { userId: string; tenantId: string; email: string; name: string; role: string }): string {
-  return sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN })
+  return sign(payload, getJwtSecret(), { expiresIn: JWT_EXPIRES_IN })
 }
 
 export function verifyToken(token: string): { userId: string; tenantId: string; email: string; name: string; role: string } | null {
   try {
-    return verify(token, JWT_SECRET) as { userId: string; tenantId: string; email: string; name: string; role: string }
+    return verify(token, getJwtSecret()) as { userId: string; tenantId: string; email: string; name: string; role: string }
+  } catch {
+    return null
+  }
+}
+
+export function createRefreshToken(payload: { userId: string; tenantId: string }): string {
+  return sign(payload, getRefreshSecret(), { expiresIn: REFRESH_EXPIRES_IN })
+}
+
+export function verifyRefreshToken(token: string): { userId: string; tenantId: string } | null {
+  try {
+    return verify(token, getRefreshSecret()) as { userId: string; tenantId: string }
   } catch {
     return null
   }
@@ -79,12 +97,13 @@ export async function registerUser(data: {
   const tenantId = nanoid()
   const userId = nanoid()
   const passwordHash = await hashPassword(data.password)
-  const tenantSlug = (data.tenantName || data.name).toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')
+  const tenantSlugBase = (data.tenantName || data.name).toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')
+  const tenantSlug = `${tenantSlugBase}-${nanoid(6)}`
 
   // Create tenant
   await query(
     'INSERT INTO tenants (id, name, slug, plan, created_at) VALUES ($1, $2, $3, $4, NOW())',
-    [tenantId, data.tenantName || `${data.name}'s Workspace`, `${tenantSlug}-${nanoid(6)}`, 'free']
+    [tenantId, data.tenantName || `${data.name}'s Workspace`, tenantSlug, 'free']
   )
 
   // Create user

@@ -1,8 +1,7 @@
 // Goal & Habit Repositories - Infrastructure implementation
 import { query } from '@/lib/db'
 import { nanoid } from 'nanoid'
-import type { Goal, Habit, HabitLog } from '@/core/entities'
-import type { IGoalRepository, IHabitRepository, TenantContext, PaginatedResult } from '@/core/repositories'
+import type { Goal, Habit, HabitLog, IGoalRepository, IHabitRepository, TenantContext, PaginatedResult } from '@iris/domain'
 
 export class GoalRepository implements IGoalRepository {
   async create(ctx: TenantContext, data: Pick<Goal, 'title' | 'description' | 'target_value' | 'unit' | 'deadline'>): Promise<Goal> {

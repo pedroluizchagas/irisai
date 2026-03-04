@@ -330,5 +330,8 @@ ${JSON.stringify(contexto)}`,
     },
   })
 
-  return result.toUIMessageStreamResponse()
+  const accept = request.headers.get('accept') || ''
+  const url = new URL(request.url)
+  const isTextOnly = accept.includes('text/plain') || url.searchParams.get('mode') === 'text'
+  return isTextOnly ? result.toTextStreamResponse() : result.toUIMessageStreamResponse()
 }

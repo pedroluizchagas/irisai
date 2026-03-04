@@ -1,8 +1,7 @@
 // Transaction Repository - Infrastructure implementation
 import { query } from '@/lib/db'
 import { nanoid } from 'nanoid'
-import type { Transaction } from '@/core/entities'
-import type { ITransactionRepository, TenantContext, PaginatedResult } from '@/core/repositories'
+import type { Transaction, ITransactionRepository, TenantContext, PaginatedResult } from '@iris/domain'
 
 export class TransactionRepository implements ITransactionRepository {
   async create(ctx: TenantContext, data: Pick<Transaction, 'type' | 'amount' | 'currency' | 'category' | 'description' | 'date' | 'is_recurring' | 'recurrence_interval'>): Promise<Transaction> {

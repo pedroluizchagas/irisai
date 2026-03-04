@@ -1,8 +1,7 @@
 // Event Repository - Infrastructure implementation
 import { query } from '@/lib/db'
 import { nanoid } from 'nanoid'
-import type { Event } from '@/core/entities'
-import type { IEventRepository, TenantContext } from '@/core/repositories'
+import type { Event, IEventRepository, TenantContext } from '@iris/domain'
 
 export class EventRepository implements IEventRepository {
   async create(ctx: TenantContext, data: Pick<Event, 'title' | 'description' | 'start_time' | 'end_time' | 'all_day' | 'location' | 'color' | 'recurrence'>): Promise<Event> {

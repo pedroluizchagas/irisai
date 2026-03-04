@@ -1,8 +1,7 @@
 // Chat Repository - Infrastructure implementation
 import { query } from '@/lib/db'
 import { nanoid } from 'nanoid'
-import type { ChatMessage } from '@/core/entities'
-import type { IChatRepository, TenantContext } from '@/core/repositories'
+import type { ChatMessage, IChatRepository, TenantContext } from '@iris/domain'
 
 export class ChatRepository implements IChatRepository {
   async saveMessage(ctx: TenantContext, data: Pick<ChatMessage, 'role' | 'content' | 'metadata'>): Promise<ChatMessage> {

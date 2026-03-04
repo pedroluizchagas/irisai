@@ -17,10 +17,11 @@ export function ChatScreen() {
     setLoading(true)
     setReply('')
     const token = await SecureStore.getItemAsync('iris-token')
-    const res = await fetch((process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000') + '/api/chat', {
+    const res = await fetch((process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000') + '/api/chat?mode=text', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'text/plain',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({

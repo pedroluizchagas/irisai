@@ -1,8 +1,7 @@
 // Note Repository - Infrastructure implementation
 import { query } from '@/lib/db'
 import { nanoid } from 'nanoid'
-import type { Note } from '@/core/entities'
-import type { INoteRepository, TenantContext, PaginatedResult } from '@/core/repositories'
+import type { Note, INoteRepository, TenantContext, PaginatedResult } from '@iris/domain'
 
 export class NoteRepository implements INoteRepository {
   async create(ctx: TenantContext, data: Pick<Note, 'title' | 'content' | 'tags' | 'is_pinned'>): Promise<Note> {

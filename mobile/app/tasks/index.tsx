@@ -1,10 +1,11 @@
 import * as React from 'react'
-import { View, Text, ScrollView, Pressable } from 'react-native'
+import { View, Text, ScrollView, Pressable, TextInput } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../src/theme/ThemeProvider'
 import { Screen, SectionTitle, Subtitle, Card, Row, Spacer, Pill, Badge, Progress, RingProgress } from '../../src/ui/primitives'
-import { listTasks } from '../../src/api/client'
+import { listTasks, createTask } from '../../src/api/client'
 import type { Task } from '@iris/domain'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 function formatTime(iso: string | null) {
   if (!iso) return ''
@@ -36,20 +37,31 @@ function priorityLabel(p: Task['priority']) {
 
 export default function TasksScreen() {
   const { theme } = useTheme()
-  const [tasks, setTasks] = React.useState<Task[]>([])
-  const [loading, setLoading] = React.useState(false)
+  const qc = useQueryClient()
+  const [showAdd, setShowAdd] = React.useState(false)
+  const [title, setTitle] = React.useState('')
   const [filter, setFilter] = React.useState<'all' | 'urgent' | 'work' | 'personal'>('all')
 
-  React.useEffect(() => {
-    let mounted = true
-    setLoading(true)
-    listTasks({ limit: 100 }).then((res) => {
-      const data = res.data || []
-      if (mounted) setTasks(data)
-      setLoading(false)
-    }).catch(() => setLoading(false))
-    return () => { mounted = false }
-  }, [])
+  const { data, isLoading } = useQuery({
+    queryKey: ['tasks', { limit: 100 }],
+    queryFn: async () => {
+      const res = await listTasks({ limit: 100 })
+      return res.data || []
+    },
+  })
+  const tasks = (data || []) as Task[]
+
+  const createMut = useMutation({
+    mutationFn: async (t: { title: string }) => {
+      const res = await createTask({ title: t.title, description: null, status: 'todo', priority: 'medium', due_date: null, tags: null })
+      return res.data
+    },
+    onSuccess: () => {
+      setTitle('')
+      setShowAdd(false)
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+    },
+  })
 
   const filtered = tasks.filter((t) => {
     if (filter === 'urgent') return t.priority === 'urgent'
@@ -83,11 +95,47 @@ export default function TasksScreen() {
             <Pressable style={{ backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.border, borderWidth: 1, borderRadius: theme.radius.md, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
               <Ionicons name="search" size={18} color={theme.colors.text} />
             </Pressable>
-            <Pressable style={{ backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.border, borderWidth: 1, borderRadius: theme.radius.md, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="add" size={22} color={theme.colors.text} />
+            <Pressable onPress={() => setShowAdd((v) => !v)} style={{ backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.border, borderWidth: 1, borderRadius: theme.radius.md, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name={showAdd ? 'close' : 'add'} size={22} color={theme.colors.text} />
             </Pressable>
           </Row>
         </Row>
+
+        {showAdd ? (
+          <Card style={{ gap: 10 }}>
+            <Text style={{ color: theme.colors.text, fontWeight: '700' }}>Nova tarefa</Text>
+            <TextInput
+              placeholder="Título"
+              placeholderTextColor={theme.colors.textMuted}
+              value={title}
+              onChangeText={setTitle}
+              style={{
+                backgroundColor: theme.colors.surfaceAlt,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                borderRadius: theme.radius.md,
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+                color: theme.colors.text,
+              }}
+            />
+            <Row style={{ justifyContent: 'flex-end' }}>
+              <Pressable
+                disabled={createMut.isPending || !title.trim()}
+                onPress={() => createMut.mutate({ title })}
+                style={{
+                  backgroundColor: theme.colors.primary,
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
+                  borderRadius: theme.radius.md,
+                  opacity: createMut.isPending || !title.trim() ? 0.7 : 1,
+                }}
+              >
+                <Text style={{ color: '#0B0B0D', fontWeight: '700' }}>{createMut.isPending ? 'Criando...' : 'Adicionar'}</Text>
+              </Pressable>
+            </Row>
+          </Card>
+        ) : null}
 
         <Card style={{ padding: 18 }}>
           <Row style={{ justifyContent: 'space-between' }}>
@@ -121,7 +169,9 @@ export default function TasksScreen() {
 
         <View style={{ gap: 12 }}>
           <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: '700' }}>Hoje</Text>
-          {today.length === 0 ? (
+          {isLoading ? (
+            <Card><Text style={{ color: theme.colors.textMuted }}>Carregando...</Text></Card>
+          ) : today.length === 0 ? (
             <Card><Text style={{ color: theme.colors.textMuted }}>Sem tarefas para hoje</Text></Card>
           ) : (
             today.map((t) => {

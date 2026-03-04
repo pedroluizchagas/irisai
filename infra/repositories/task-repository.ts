@@ -1,8 +1,7 @@
 // Task Repository - Infrastructure implementation
 import { query } from '@/lib/db'
 import { nanoid } from 'nanoid'
-import type { Task } from '@/core/entities'
-import type { ITaskRepository, TenantContext, PaginatedResult } from '@/core/repositories'
+import type { Task, ITaskRepository, TenantContext, PaginatedResult } from '@iris/domain'
 
 export class TaskRepository implements ITaskRepository {
   async create(ctx: TenantContext, data: Pick<Task, 'title' | 'description' | 'status' | 'priority' | 'due_date' | 'tags'>): Promise<Task> {

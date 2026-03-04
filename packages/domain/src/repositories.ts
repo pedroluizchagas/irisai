@@ -1,15 +1,10 @@
-// Repository Interfaces - Clean Architecture (Interface Segregation Principle)
-// These define the contracts that infrastructure must implement
-
 import type { Task, Event, Note, Transaction, Goal, Habit, HabitLog, ChatMessage, User, Tenant } from './entities'
 
-// Base context for multi-tenant queries
 export interface TenantContext {
   tenantId: string
   userId: string
 }
 
-// Pagination
 export interface PaginationParams {
   page?: number
   limit?: number
@@ -25,14 +20,12 @@ export interface PaginatedResult<T> {
   }
 }
 
-// --- Tenant Repository ---
 export interface ITenantRepository {
   create(data: Pick<Tenant, 'name' | 'slug' | 'plan'>): Promise<Tenant>
   findById(id: string): Promise<Tenant | null>
   findBySlug(slug: string): Promise<Tenant | null>
 }
 
-// --- User Repository ---
 export interface IUserRepository {
   create(data: Omit<User, 'id' | 'created_at'>): Promise<User>
   findById(id: string): Promise<User | null>
@@ -41,7 +34,6 @@ export interface IUserRepository {
   update(id: string, data: Partial<Pick<User, 'name' | 'avatar_url' | 'role'>>): Promise<User>
 }
 
-// --- Task Repository ---
 export interface ITaskRepository {
   create(ctx: TenantContext, data: Pick<Task, 'title' | 'description' | 'status' | 'priority' | 'due_date' | 'tags'>): Promise<Task>
   findById(ctx: TenantContext, id: string): Promise<Task | null>
@@ -51,7 +43,6 @@ export interface ITaskRepository {
   countByStatus(ctx: TenantContext): Promise<Record<string, number>>
 }
 
-// --- Event Repository ---
 export interface IEventRepository {
   create(ctx: TenantContext, data: Pick<Event, 'title' | 'description' | 'start_time' | 'end_time' | 'all_day' | 'location' | 'color' | 'recurrence'>): Promise<Event>
   findById(ctx: TenantContext, id: string): Promise<Event | null>
@@ -61,7 +52,6 @@ export interface IEventRepository {
   delete(ctx: TenantContext, id: string): Promise<void>
 }
 
-// --- Note Repository ---
 export interface INoteRepository {
   create(ctx: TenantContext, data: Pick<Note, 'title' | 'content' | 'tags' | 'is_pinned'>): Promise<Note>
   findById(ctx: TenantContext, id: string): Promise<Note | null>
@@ -70,7 +60,6 @@ export interface INoteRepository {
   delete(ctx: TenantContext, id: string): Promise<void>
 }
 
-// --- Transaction Repository ---
 export interface ITransactionRepository {
   create(ctx: TenantContext, data: Pick<Transaction, 'type' | 'amount' | 'currency' | 'category' | 'description' | 'date' | 'is_recurring' | 'recurrence_interval'>): Promise<Transaction>
   findById(ctx: TenantContext, id: string): Promise<Transaction | null>
@@ -80,7 +69,6 @@ export interface ITransactionRepository {
   getSummary(ctx: TenantContext, month?: string): Promise<{ income: number; expense: number; balance: number }>
 }
 
-// --- Goal Repository ---
 export interface IGoalRepository {
   create(ctx: TenantContext, data: Pick<Goal, 'title' | 'description' | 'target_value' | 'unit' | 'deadline'>): Promise<Goal>
   findById(ctx: TenantContext, id: string): Promise<Goal | null>
@@ -89,7 +77,6 @@ export interface IGoalRepository {
   delete(ctx: TenantContext, id: string): Promise<void>
 }
 
-// --- Habit Repository ---
 export interface IHabitRepository {
   create(ctx: TenantContext, data: Pick<Habit, 'title' | 'description' | 'frequency' | 'target_count' | 'color'>): Promise<Habit>
   findById(ctx: TenantContext, id: string): Promise<Habit | null>
@@ -101,7 +88,6 @@ export interface IHabitRepository {
   getLogsForRange(ctx: TenantContext, habitId: string, start: string, end: string): Promise<HabitLog[]>
 }
 
-// --- Chat Repository ---
 export interface IChatRepository {
   saveMessage(ctx: TenantContext, data: Pick<ChatMessage, 'role' | 'content' | 'metadata'>): Promise<ChatMessage>
   getHistory(ctx: TenantContext, limit?: number): Promise<ChatMessage[]>
