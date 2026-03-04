@@ -5,26 +5,48 @@ import { awsCredentialsProvider } from '@vercel/functions/oidc'
 import { Pool } from 'pg'
 
 async function getPool() {
-  const signer = new DsqlSigner({
-    credentials: awsCredentialsProvider({
-      roleArn: process.env.AWS_ROLE_ARN,
-      clientConfig: { region: process.env.AWS_REGION },
-    }),
-    region: process.env.AWS_REGION,
-    hostname: process.env.PGHOST,
-    expiresIn: 900,
-  })
-  const token = await signer.getDbConnectAdminAuthToken()
-  const pool = new Pool({
-    host: process.env.PGHOST,
+  const host = process.env.PGHOST || 'localhost'
+  const isLocal = host.includes('localhost') || host.startsWith('127.')
+  const hasOidc = !!process.env.AWS_ROLE_ARN && !!process.env.AWS_REGION
+  const hasCreds = !!process.env.AWS_ACCESS_KEY_ID && !!process.env.AWS_SECRET_ACCESS_KEY && !!process.env.AWS_REGION
+  const useIam = !isLocal && (hasOidc || hasCreds) && !process.env.PGPASSWORD
+  if (useIam) {
+    const credentials = hasOidc
+      ? awsCredentialsProvider({
+          roleArn: process.env.AWS_ROLE_ARN,
+          clientConfig: { region: process.env.AWS_REGION },
+        })
+      : async () => ({
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+          sessionToken: process.env.AWS_SESSION_TOKEN,
+        })
+    const signer = new DsqlSigner({
+      credentials,
+      region: process.env.AWS_REGION,
+      hostname: host,
+      expiresIn: 900,
+    })
+    const token = await signer.getDbConnectAdminAuthToken()
+    return new Pool({
+      host,
+      user: process.env.PGUSER || 'admin',
+      database: process.env.PGDATABASE || 'postgres',
+      password: token,
+      port: 5432,
+      ssl: true,
+      max: 5,
+    })
+  }
+  return new Pool({
+    host,
     user: process.env.PGUSER || 'admin',
     database: process.env.PGDATABASE || 'postgres',
-    password: token,
+    password: process.env.PGPASSWORD,
     port: 5432,
-    ssl: true,
+    ssl: process.env.PGSSL === 'false' ? false : isLocal ? false : true,
     max: 5,
   })
-  return pool
 }
 
 function getSqlFiles(dir) {

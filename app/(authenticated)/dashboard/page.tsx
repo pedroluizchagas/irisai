@@ -1,7 +1,12 @@
 import Link from 'next/link'
+import { headers } from 'next/headers'
 
 async function getDashboard() {
-  const res = await fetch('/api/dashboard', { cache: 'no-store' })
+  const h = headers()
+  const host = h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000'
+  const proto = h.get('x-forwarded-proto') ?? 'http'
+  const base = `${proto}://${host}`
+  const res = await fetch(`${base}/api/dashboard`, { cache: 'no-store' })
   if (!res.ok) return null
   const json = await res.json()
   return json.data
